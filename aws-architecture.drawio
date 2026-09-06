@@ -1,0 +1,155 @@
+<mxfile host="app.diagrams.net" modified="2026-09-05T18:30:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="aws-ecs-architecture" name="AWS Production Architecture">
+    <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- User / Clients -->
+        <mxCell id="user_clients" value="End Users / Browsers&#xa;(HTTPS Traffic: 443)" style="shape=mxgraph.aws4.users;whiteSpace=wrap;html=1;outlineConnect=0;fillColor=#232F3E;fontColor=#ffffff;strokeColor=none;align=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Route 53 & ACM -->
+        <mxCell id="route53" value="Amazon Route 53&#xa;(DNS: api.example.com)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.route_53;" vertex="1" parent="1">
+          <mxGeometry x="160" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="acm" value="AWS Certificate Manager (ACM)&#xa;SSL/TLS Certificate (*.domain)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.certificate_manager;" vertex="1" parent="1">
+          <mxGeometry x="360" y="160" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Cloud Region Container -->
+        <mxCell id="aws_cloud" value="AWS Cloud (Region: eu-central-1)" style="swimlane;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 4;fillColor=#F5F7FA;strokeColor=#232F3E;strokeWidth=2;fontStyle=1;fontSize=14;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="270" y="80" width="760" height="640" as="geometry" />
+        </mxCell>
+
+        <!-- VPC Container -->
+        <mxCell id="vpc" value="VPC (10.0.0.0/16)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E88E5;strokeWidth=2;fontStyle=1;fontSize=13;fontColor=#1E88E5;" vertex="1" parent="aws_cloud">
+          <mxGeometry x="30" y="160" width="700" height="460" as="geometry" />
+        </mxCell>
+
+        <!-- Internet Gateway -->
+        <mxCell id="igw" value="Internet Gateway (IGW)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.internet_gateway;" vertex="1" parent="vpc">
+          <mxGeometry x="10" y="130" width="50" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Public Subnets Box -->
+        <mxCell id="public_subnets" value="Public Subnets (DMZ Tier)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#43A047;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="vpc">
+          <mxGeometry x="90" y="40" width="220" height="400" as="geometry" />
+        </mxCell>
+
+        <!-- Public Subnet AZ-a -->
+        <mxCell id="pub_subnet_a" value="Public Subnet AZ-a (10.0.1.0/24)&#xa;NAT Gateway (Elastic IP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#81C784;fontColor=#1B5E20;fontSize=11;" vertex="1" parent="public_subnets">
+          <mxGeometry x="15" y="40" width="190" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ALB in Public Subnet -->
+        <mxCell id="alb" value="Application Load Balancer (ALB)&#xa;Security Group: 80, 443 Ingress&#xa;Health Check: /api/v1" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=center;html=1;fontSize=11;fontStyle=1;rounded=1;" vertex="1" parent="public_subnets">
+          <mxGeometry x="15" y="150" width="190" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Public Subnet AZ-b -->
+        <mxCell id="pub_subnet_b" value="Public Subnet AZ-b (10.0.2.0/24)&#xa;ALB Secondary AZ Standby" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#81C784;fontColor=#1B5E20;fontSize=11;" vertex="1" parent="public_subnets">
+          <mxGeometry x="15" y="290" width="190" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Private Subnets Box -->
+        <mxCell id="private_subnets" value="Private Subnets (Application Tier - Isolated)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=1.5;fontStyle=1;fontSize=12;fontColor=#0D47A1;" vertex="1" parent="vpc">
+          <mxGeometry x="350" y="40" width="330" height="400" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Cluster -->
+        <mxCell id="ecs_cluster" value="AWS ECS Cluster (Fargate Serverless)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=1.5;fontStyle=1;fontSize=11;fontColor=#E65100;" vertex="1" parent="private_subnets">
+          <mxGeometry x="15" y="40" width="300" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Task 1 (AZ-a) -->
+        <mxCell id="ecs_task_1" value="ECS Task 1 (AZ-a)&#xa;Docker: NestJS App&#xa;Port: 3000 (Internal)&#xa;SG: Ingress from ALB SG Only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FB8C00;fontColor=#BF360C;fontSize=10;" vertex="1" parent="ecs_cluster">
+          <mxGeometry x="20" y="40" width="260" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Task 2 (AZ-b) -->
+        <mxCell id="ecs_task_2" value="ECS Task 2 (AZ-b)&#xa;Docker: NestJS App&#xa;Port: 3000 (Internal)&#xa;SG: Ingress from ALB SG Only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FB8C00;fontColor=#BF360C;fontSize=10;" vertex="1" parent="ecs_cluster">
+          <mxGeometry x="20" y="140" width="260" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- IAM Roles block -->
+        <mxCell id="iam_roles" value="IAM Roles:&#xa;• ecsTaskExecutionRole (ECR pull, CloudWatch logs)&#xa;• ecsTaskRole (App permissions)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#90A4AE;fontColor=#37474F;fontSize=9;align=left;" vertex="1" parent="ecs_cluster">
+          <mxGeometry x="20" y="240" width="260" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- CloudWatch Logs -->
+        <mxCell id="cloudwatch" value="Amazon CloudWatch&#xa;Logs Group: /ecs/nestjs-todo&#xa;Metrics &amp; Alarms" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF4F8B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="aws_cloud">
+          <mxGeometry x="580" y="40" width="50" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- AWS ECR -->
+        <mxCell id="ecr" value="Amazon ECR&#xa;Private Container Registry&#xa;(nestjs-notes-todo)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.ecr;" vertex="1" parent="aws_cloud">
+          <mxGeometry x="460" y="40" width="50" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- External Database: MongoDB Atlas -->
+        <mxCell id="mongodb_atlas" value="External Database Tier&#xa;MongoDB Cloud (Atlas Cluster)&#xa;Network Whitelist: NAT GW IP" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#13AA52;fontColor=#FFFFFF;strokeColor=#0B6623;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="380" width="140" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- CI/CD Pipelines -->
+        <mxCell id="cicd" value="CI/CD Pipelines&#xa;(GitLab CI / GitHub Actions)&#xa;1. npm test&#xa;2. docker build &amp; push&#xa;3. aws ecs update-service" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FC6D26;fontColor=#FFFFFF;strokeColor=#E24329;fontSize=10;fontStyle=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="180" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Connectors -->
+        <mxCell id="flow_user_r53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;" edge="1" source="user_clients" target="route53" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow_r53_alb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="route53" target="alb" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="350" />
+              <mxPoint x="240" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="flow_alb_tasks" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7AA116;" edge="1" source="alb" target="ecs_task_1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="430" />
+              <mxPoint x="600" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="flow_alb_tasks2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7AA116;" edge="1" source="alb" target="ecs_task_2" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="430" />
+              <mxPoint x="600" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="flow_tasks_mongo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#13AA52;dashed=1;" edge="1" source="ecs_cluster" target="mongodb_atlas" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow_cicd_ecr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#FC6D26;dashed=1;" edge="1" source="cicd" target="ecr" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="165" />
+              <mxPoint x="210" y="110" />
+              <mxPoint x="755" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="flow_acm_alb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#DD344C;dashed=1;" edge="1" source="acm" target="alb" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

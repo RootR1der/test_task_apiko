@@ -1,0 +1,84 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline for NestJS Todo App
+# Workflow: Test (npm test) -> Build (Docker & ECR) -> Deploy (AWS ECS Fargate)
+# Rule: Triggered on changes to 'master' (or 'main'). If tests fail, deploy stops!
+# ==============================================================================
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  # AWS and Container Registry Variables (configure in GitLab -> Settings -> CI/CD -> Variables)
+  AWS_DEFAULT_REGION: "eu-central-1"
+  ECR_REPOSITORY: "nestjs-todo-production"
+  ECS_CLUSTER_NAME: "nestjs-todo-production-cluster"
+  ECS_SERVICE_NAME: "nestjs-todo-production-service"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+# Cache node_modules between pipeline runs to speed up testing
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .npm/
+    - node_modules/
+
+# ------------------------------------------------------------------------------
+# Stage 1: Automated Unit Tests
+# MUST PASS before build and deploy. If tests fail, pipeline stops immediately!
+# ------------------------------------------------------------------------------
+unit-tests:
+  stage: test
+  image: node:18-alpine
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - echo "Running unit tests with Jest..."
+    - npm run test
+  only:
+    - master
+    - main
+    - merge_requests
+
+# ------------------------------------------------------------------------------
+# Stage 2: Docker Build & Push to Private AWS ECR
+# ------------------------------------------------------------------------------
+build-and-push-image:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - apk add --no-cache curl jq python3 py3-pip
+    - pip install --break-system-packages awscli
+    - echo "Authenticating with Amazon ECR..."
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  script:
+    - REGISTRY_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY"
+    - IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+    - echo "Building Docker image: $REGISTRY_URL:$IMAGE_TAG..."
+    - docker build -t "$REGISTRY_URL:$IMAGE_TAG" -t "$REGISTRY_URL:latest" .
+    - echo "Pushing Docker image to private AWS ECR..."
+    - docker push "$REGISTRY_URL:$IMAGE_TAG"
+    - docker push "$REGISTRY_URL:latest"
+  only:
+    - master
+    - main
+
+# ------------------------------------------------------------------------------
+# Stage 3: Deploy to AWS ECS Fargate
+# ------------------------------------------------------------------------------
+deploy-to-ecs:
+  stage: deploy
+  image: amazon/aws-cli:latest
+  script:
+    - echo "Triggering rolling update deployment on Amazon ECS Fargate..."
+    - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment --region $AWS_DEFAULT_REGION
+    - echo "Waiting for ECS service to reach steady state..."
+    - aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME --region $AWS_DEFAULT_REGION
+    - echo "Deployment successfully completed with Zero Downtime!"
+  only:
+    - master
+    - main

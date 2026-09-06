@@ -1,0 +1,27 @@
+# Приклад значень змінних для Terraform
+# Скопіюйте цей файл у terraform.tfvars та встановіть власні значення:
+# cp terraform.tfvars.example terraform.tfvars
+
+aws_region   = "eu-central-1"
+project_name = "nestjs-todo"
+environment  = "production"
+
+# Мережеві налаштування
+vpc_cidr        = "10.0.0.0/16"
+public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnets = ["10.0.10.0/24", "10.0.11.0/24"]
+
+# Ресурси Fargate
+app_count      = 2
+fargate_cpu    = 256
+fargate_memory = 512
+
+# Рядок підключення до MongoDB Atlas (замініть на свій реальний URI)
+database_uri = "mongodb+srv://dbuser:MyStrongPass123!@cluster0.abcde.mongodb.net/notes_todo?retryWrites=true&w=majority"
+
+# Опціональний власний домен та SSL сертифікат (залиште порожніми, якщо тестуєте через ALB DNS)
+# domain_name     = "api.example.com"
+# certificate_arn = "arn:aws:acm:eu-central-1:123456789012:certificate/xxxx-xxxx"
+
+# NAT Gateway (встановіть true для ізольованого production або false для економії коштів під час демо)
+enable_nat_gateway = true
